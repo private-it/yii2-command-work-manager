@@ -4,26 +4,20 @@ namespace PrivateIT\command\workManager;
 
 use Yii;
 use yii\base\Model;
-use yii\base\Object;
 use yii\console\Controller;
 use yii\console\Exception;
 
 class WorkManagerController extends Controller
 {
-    public $store = '@data/work-manager.json';
-    public $runtime = '@runtime/work-manager/last-run';
     public $logDir = '@runtime/work-manager/logs';
     public $lockFile = '@runtime/work-manager/run.lock';
     public $timeout = 1000000; // 1 second
 
-    protected $handleLockFile;
+    protected $_handleLockFile;
+    protected $_store;
 
     public function init()
     {
-        $runtime = Yii::getAlias($this->runtime);
-        if (!is_dir($runtime)) {
-            mkdir($runtime, 0777, true);
-        }
         $logDir = Yii::getAlias($this->logDir);
         if (!is_dir($logDir)) {
             mkdir($logDir, 0777, true);
@@ -120,8 +114,8 @@ class WorkManagerController extends Controller
 
     protected function isRunning()
     {
-        $this->handleLockFile = fopen(Yii::getAlias($this->lockFile), 'r+');
-        return !flock($this->handleLockFile, LOCK_EX | LOCK_NB);
+        $this->_handleLockFile = fopen(Yii::getAlias($this->lockFile), 'r+');
+        return !flock($this->_handleLockFile, LOCK_EX | LOCK_NB);
     }
 
     /**
@@ -131,7 +125,7 @@ class WorkManagerController extends Controller
     protected function getTasks()
     {
         $tasks = [];
-        $store = json_decode(file_get_contents(Yii::getAlias($this->store)), true);
+        $store = json_decode(file_get_contents($this->getStore()), true);
         if (false !== $store) {
             foreach ($store as $attributes) {
                 $tasks[] = new Task($attributes);
@@ -148,7 +142,29 @@ class WorkManagerController extends Controller
      */
     protected function setTasks($data)
     {
-        return file_put_contents(Yii::getAlias($this->store), json_encode($data));
+        return file_put_contents($this->getStore(), json_encode($data));
+    }
+
+    /**
+     * @return string
+     */
+    public function getStore()
+    {
+        if (!$this->_store) {
+            $this->setStore('@data/work-manager.json');
+        }
+        if (!file_exists($this->_store)) {
+            file_put_contents($this->_store, '[]');
+        }
+        return $this->_store;
+    }
+
+    /**
+     * @param string $store
+     */
+    public function setStore($store)
+    {
+        $this->_store = Yii::getAlias($store);
     }
 }
 
