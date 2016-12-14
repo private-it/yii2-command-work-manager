@@ -1,0 +1,15 @@
+{
+  "name": "private-it/yii2-command-work-manager",
+  "description": "",
+  "license": "proprietary",
+  "type": "yii2-extension",
+  "autoload": {
+    "psr-4": {
+      "PrivateIT\\command\\workManager\\": "src",
+      "tests\\": "tests"
+    }
+  },
+  "require": {
+    "yiisoft/yii2": "^2.0"
+  }
+}
